@@ -90,8 +90,8 @@
 <rect x="832" y="402" width="172" height="97" rx="9" fill="#FFF0EF" stroke="#F5B8B3"/>
 <text x="844" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">PERMISSION_DENIED</text>
 <text x="844" y="436" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">SANDBOX_REFUSED</text>
-<text x="844" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">TIMEOUT</text>
-<text x="844" y="466" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">NOT_FOUND</text>
+<text x="844" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">APP_UNAVAILABLE</text>
+<text x="844" y="466" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">TIMEOUT, NOT_FOUND</text>
 <text x="844" y="481" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">APP_ERROR</text>
 <rect x="1030" y="214" width="172" height="158" rx="12" fill="#FFFFFF" stroke="#D1D9E0" filter="url(#sh)"/>
 <rect x="1030" y="214" width="172" height="6" rx="3" fill="#8250DF"/>

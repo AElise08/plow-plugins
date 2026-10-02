@@ -20,7 +20,7 @@ Returned fields: `id`, `name`, `emails` (values), `phones` (values). Nothing els
 
 ## Running under Latch
 
-Latch runs a plugin command inside a `sandbox-exec` profile that **denies Apple Events by default**, so every call that reaches the app must declare `apple_events=true` on `plow_run_command` (`doctor` and `--help` need nothing). Latch never stores a rule for such a call: the owner decides each one. The skill tells the agent both. If a call is refused anyway you will see `PERMISSION_DENIED` (macOS Automation not granted, or the call forgot `apple_events=true`), or `SANDBOX_REFUSED` (error -10004: the app itself refuses Apple Events from a sandboxed sender; Latch documents Mail's compose as one such case, and whether Contacts behaves that way has not been checked).
+Latch runs a plugin command inside a `sandbox-exec` profile that **denies Apple Events by default**, so every call that reaches the app must declare `apple_events=true` on `plow_run_command` (`doctor` and `--help` need nothing). Latch never stores a rule for such a call: the owner decides each one. The skill tells the agent both. A call that forgot `apple_events=true` comes back as `APP_UNAVAILABLE` (error -600), which was checked by running the plugin under a replica of Latch's sandbox (`scripts/sandbox-smoke.mjs`). If a call is refused for another reason you will see `PERMISSION_DENIED` (macOS Automation not granted, or the call forgot `apple_events=true`), or `SANDBOX_REFUSED` (error -10004: the app itself refuses Apple Events from a sandboxed sender; Latch documents Mail's compose as one such case, and whether Contacts behaves that way has not been checked).
 
 ## Output contract
 

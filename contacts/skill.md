@@ -17,7 +17,7 @@ Run it with `plow_run_command`:
 
 **Always pass `apple_events=true`** — on every call except `doctor` and `--help`. The plugin drives the app through
 `osascript`, and Latch's sandbox denies Apple Events unless the call declares them. Without it the call fails
-(usually `PERMISSION_DENIED`, `APP_UNAVAILABLE` or `APP_ERROR`), and that is never a reason to look for another
+(typically `APP_UNAVAILABLE`, error -600), and that is never a reason to look for another
 way into the app's data. Latch never stores a rule for a call that sends Apple Events, so the owner decides
 each one: keep calls few and specific (one search, then one `show` for the id you chose).
 

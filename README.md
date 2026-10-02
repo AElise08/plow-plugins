@@ -111,6 +111,7 @@ Whatever a command prints is returned to the model provider as conversation cont
 node --test "shared/test/*.test.js"              # the whole suite
 node scripts/build-plugins.mjs --check           # plugin folders match shared/
 node scripts/check-against-latch.mjs ../latch    # Latch's real parser + allowlist (needs a checkout, Node >= 22.18)
+node scripts/sandbox-smoke.mjs reminders -- doctor   # run a plugin under a replica of Latch's sandbox (see below)
 ```
 
 No test touches Contacts, Reminders, Notes or Calendar. There are three levels, kept apart from the real apps: a high-level fake backend over fictional data; the **real JXA scripts** run inside a Node `vm` against a fictional object model (it proves our script logic and guards, not Apple's behaviour); and the real CLI process over the fake. Static checks assert there is no network, no file writing, getter-only read scripts and per-function limits on the write scripts. Manifests and every `argv=[...]` example in each `skill.md` are checked against a port of Latch's rules (`shared/test/support/latch-rules.js`, pinned to Latch commit `006f4db`) and, with `check-against-latch.mjs`, against the real code.
@@ -119,20 +120,25 @@ No test touches Contacts, Reminders, Notes or Calendar. There are three levels, 
 
 **Checked on a real Mac** (macOS 26.2, Node 24, 2026-10-02), running the CLI directly with fictional "Teste MacQuery" items: contacts search/show; reminders search/show/create/delete; notes title and text search, `show` (including a locked note whose body was never read), create and delete; calendar list, window search, create, update and delete. Per-plugin READMEs list exactly what ran and what did not.
 
-**Checked by reading Latch's source** (commit `006f4db`; nothing has been *run* under Latch yet):
+**Checked by running the plugins under a replica of Latch's sandbox** (`scripts/sandbox-smoke.mjs`: the same `sandbox-exec` profile, curated environment and working directory as Latch's executor at commit `006f4db`; the suite runs these on macOS):
+
+- All four plugins start: Node is found on Latch's `PATH`, the `/bin/sh` shim runs, and `--help` answers.
+- `doctor` works: each app's `.sdef` is readable and `plutil` runs.
+- A call **without** `apple_events` is stopped by the sandbox before it reaches the app: JXA throws error `-600` ("Application isn't running", with no number in the text), and the CLI reports it as `APP_UNAVAILABLE` with a message naming `apple_events=true`. (Before this check the CLI read only the message text and answered an opaque `APP_ERROR`; it now reads the error's `errorNumber`.)
+
+**Checked by reading Latch's source** (commit `006f4db`; nothing has been *run* under Latch itself yet):
 
 - A plugin command runs as `[exec.argv[0], ...exec.argv[1:], ...agent argv tail]` with the plugin's own directory as `cwd`, and an **absolute** `exec.argv[0]` such as `/bin/sh` is a supported shape, so `["/bin/sh", "cli/bin/plow-<app>.sh"]` is run as written.
-- The sandbox (`sandbox-exec`, deny by default) lets the run read the whole home directory plus `/usr`, `/bin`, `/System`, `/Library` and `/opt` (so the plugin folder, Node and each app's `.sdef` are readable), and execute programs.
-- It lets the run send Apple Events **only** when the call declares `apple_events: true`; such a call is never reaped for going silent and is never decided by a stored rule. Latch's own Contacts skill drives Contacts through `/usr/bin/osascript` the same way (this CLI also spells the path out).
+- The sandbox lets the run send Apple Events **only** when the call declares `apple_events: true`; such a call is never reaped for going silent and is never decided by a stored rule. Latch's own Contacts skill drives Contacts through `/usr/bin/osascript` the same way (this CLI also spells the path out).
 - A call that outlives `wait_ms` (default 10 s) returns a job handle (`plow_get_result`, then `plow_get_output`), which fits a 10-30 s calendar search.
 
 **Not verified inside Latch:**
 
-- That it works end to end: no plugin here has run under Latch.
+- That it works end to end: no plugin here has run under Latch, and no data call has been run through the sandbox replica **with** Apple Events allowed.
 - That Notes, Reminders and Calendar accept Apple Events from a sandboxed sender. Latch documents some apps that do not (`-10004`, Mail's compose); this CLI reports that case as `SANDBOX_REFUSED`. Contacts and Messages are used this way by Latch itself.
 - How Latch names the app when a call is denied: it looks for `tell application "X"` in the argv, which a plugin argv does not contain, so a denial is probably not attributed to the app's Automation row. The plugin only becomes ready after the owner grants `automation:<bundle id>` in the Plugins tab, which should prevent most denials.
 - That the owner is comfortable approving every call: with `apple_events` there is no "always allow" rule, so each search is a prompt unless the owner runs Latch in its approve-everything mode.
-- That Node 20+ is present on the owner's Mac. A pinned, self-contained binary per architecture (as `messages` and `gog` ship) would remove that requirement and is the natural next step.
+- That Node 20+ is present on the owner's Mac (it is found on Latch's `PATH` when installed in `/usr/local/bin`, `/opt/homebrew/bin` or `~/.local/bin`). A pinned, self-contained binary per architecture (as `messages` and `gog` ship) would remove that requirement and is the natural next step.
 - **Contacts overlaps Latch's built-in Contacts skill**, which reads the address book store directly (needing Full Disk Access) and writes through Contacts.app. `plow-contacts` is the read-only, Apple-Events-only alternative, with no Full Disk Access; Latch's team should decide whether it earns a place next to the built-in one.
 
 Also open on the apps themselves: all-day events and reminders, `--folder-id` / `--list-id` scoped writes, and the guard refusals against real data — see each plugin's README.

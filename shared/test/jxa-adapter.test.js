@@ -195,3 +195,20 @@ test('[vm] isGone: any non-fatal read failure means gone; fatal failures and rea
   assert.equal(gone(() => { throw new Error('Not authorized. (-1743)'); }), false);
   assert.equal(gone(() => { throw new Error('timed out. (-1712)'); }), false);
 });
+
+test('[vm] errno prefers the Apple Event errorNumber and falls back to the message text', () => {
+  const vm = require('node:vm');
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const sandbox = { String, Object, JSON, RegExp, Number, isNaN, Date };
+  vm.createContext(sandbox);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'adapters', 'jxa', 'prelude.js'), 'utf8'), sandbox);
+  const errno = vm.runInContext('errno', sandbox);
+  // what a sandbox without apple_events throws: a number in errorNumber, none in the text
+  assert.equal(errno({ errorNumber: -600, message: "Application isn't running." }), -600);
+  assert.equal(errno({ errorNumber: -1743, message: 'localised text sem numero' }), -1743);
+  assert.equal(errno({ message: 'Not authorized. (-1743)' }), -1743, 'older shape: number only in the text');
+  assert.equal(errno({ message: 'no number' }), null);
+  assert.equal(errno(new TypeError('x is not a function')), null);
+  assert.equal(errno(null), null);
+});

@@ -9,6 +9,9 @@ function refuse(reason) { return fatal(null, 'guard', reason); }
 
 function errno(e) {
   try {
+    // JXA puts the Apple Event error number in `errorNumber`. Prefer it: the message is
+    // localised and, under Latch's sandbox (no apple_events), carries no number at all.
+    if (e && typeof e.errorNumber === 'number') { return e.errorNumber; }
     var m = /\((-?\d+)\)\s*$/.exec(String(e && e.message));
     if (m) { return Number(m[1]); }
   } catch (x) { /* no number available */ }

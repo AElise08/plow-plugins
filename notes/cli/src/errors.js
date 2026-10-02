@@ -38,7 +38,9 @@ const DEFAULT_DETAIL = {
   BLOCKED_MISSING_PROPERTY:
     'A property required by this command is missing from the local scripting dictionary.',
   METHOD_UNAVAILABLE: 'The app does not implement a required scripting method.',
-  APP_UNAVAILABLE: 'The app could not be reached through Apple Events.',
+  APP_UNAVAILABLE:
+    'The app could not be reached through Apple Events (error -600/-609). Under Latch this is what a call without ' +
+    'apple_events=true produces, because its sandbox blocks Apple Events; otherwise the app is not running or cannot be launched.',
   APP_ERROR: 'The app returned an error (number only, message withheld).',
   ADAPTER_SCHEMA: 'The adapter returned data that does not match the expected schema.',
   RUNTIME_MISSING: 'A required local runtime is not available.',
