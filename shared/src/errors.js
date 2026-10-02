@@ -31,8 +31,9 @@ const DEFAULT_DETAIL = {
     'Decide manually in System Settings > Privacy & Security > Automation. ' +
     'Under Latch, the call must also declare apple_events=true, or its sandbox denies the event.',
   SANDBOX_REFUSED:
-    'The app refused an Apple Event from a sandboxed process (error -10004). That is the app saying no to ' +
-    'sandboxed senders, not a missing Automation permission, and nothing was changed.',
+    'The app refused an Apple Event from a sandboxed process (error -10004). Contacts, Reminders, Notes and Calendar ' +
+    'do this for any sandboxed sender, whatever the profile allows; it is not a missing permission. Nothing was changed. ' +
+    'Latch\'s plow_run_applescript runs outside the sandbox.',
   TIMEOUT: 'The app did not answer before the timeout; the helper process was killed.',
   NOT_FOUND: 'No item or scope with that id exists in the state exposed by the app.',
   BLOCKED_MISSING_PROPERTY:

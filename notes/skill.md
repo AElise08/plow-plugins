@@ -60,7 +60,9 @@ Output is **exactly one JSON object** on stdout: `schema_version, ok, source, it
   `error.code` names the state (`PERMISSION_DENIED`, `TIMEOUT`, `NOT_FOUND`, `BLOCKED_MISSING_PROPERTY`, ...) with the
   exit code non-zero. Report the code. On `PERMISSION_DENIED`, stop and tell the owner to decide in System Settings ›
   Privacy & Security › Automation; do not look for another way around it. `SANDBOX_REFUSED` is different: the app itself
-  refuses Apple Events from a sandboxed sender, so say so and stop.
+  refuses Apple Events from any sandboxed sender (checked on macOS 26.2 for every app of this family), so this plugin cannot
+  reach it through `plow_run_command`. Say so, and ask the owner whether to do the same thing with `plow_run_applescript`,
+  which runs outside the sandbox.
 - **Read `coverage` every time.** `coverage.complete: false` means part of the scope was not examined
   (`coverage.reasons`: `SCAN_LIMIT`, `TIME_LIMIT`, `FIELD_UNAVAILABLE`, `PROTECTED_BODY_SKIPPED`, `TEXT_CAPPED`). "I found nothing" is only true
   for what was actually scanned (`scanned` of `total_in_scope`) — say so, and never widen `--scan-limit` or fan out

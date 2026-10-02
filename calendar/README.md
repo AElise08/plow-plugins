@@ -24,7 +24,9 @@ Returned fields: `id`, `title`, `calendar` (id, name), `start`, `end`, `all_day`
 
 ## Running under Latch
 
-Latch runs a plugin command inside a `sandbox-exec` profile that **denies Apple Events by default**, so every call that reaches the app must declare `apple_events=true` on `plow_run_command` (`doctor` and `--help` need nothing). Latch never stores a rule for such a call: the owner decides each one. The skill tells the agent both. A call that forgot `apple_events=true` comes back as `APP_UNAVAILABLE` (error -600), which was checked by running the plugin under a replica of Latch's sandbox (`scripts/sandbox-smoke.mjs`). If a call is refused for another reason you will see `PERMISSION_DENIED` (macOS Automation not granted, or the call forgot `apple_events=true`), or `SANDBOX_REFUSED` (error -10004: the app itself refuses Apple Events from a sandboxed sender; Latch documents Mail's compose as one such case, and whether Calendar behaves that way has not been checked).
+**Blocked as built: through `plow_run_command`, Calendar refuses this CLI's Apple Events.** Latch runs plugin commands inside a `sandbox-exec` profile, and on macOS 26.2 the app answers every collection read from a sandboxed process with error `-10004` (also with a sandbox that allows everything, and in AppleScript as well as JXA). The CLI reports it as `SANDBOX_REFUSED` (exit 3, nothing changed). Run unsandboxed (standalone, or through Latch's `plow_run_applescript`) the same scripts work. The experiments and the options for Latch are in [`../docs/sandbox-findings.md`](../docs/sandbox-findings.md).
+
+What does work under the replica of Latch's sandbox: `--help`, `doctor`, and the error answers. A call that forgot `apple_events=true` comes back as `APP_UNAVAILABLE` (error -600). Latch's sandbox denies Apple Events unless the call declares `apple_events=true`, and Latch never stores a rule for such a call, so the owner would decide each one.
 
 ## Output contract
 

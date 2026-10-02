@@ -2,6 +2,8 @@
 
 [Latch](https://github.com/plow-pbc/latch) plugins that let an agent work with the owner's **Contacts, Reminders, Notes and Calendar** on this Mac, modelled on Latch's [`messages`](https://github.com/plow-pbc/latch/tree/main/apps/desktop/plugins/messages) plugin. Each plugin is its own folder with the three things Latch expects: a CLI, a `latch-plugin.json` manifest, and a `skill.md` that teaches the agent how to use the CLI.
 
+> **Status: works standalone, blocked inside Latch as built.** Run through `plow_run_command`, Contacts, Reminders, Notes and Calendar refuse these plugins' Apple Events (`-10004`), because Latch runs plugin commands in a sandbox and these apps refuse any sandboxed sender. This was reproduced on macOS 26.2 with Latch's own sandbox profile and with a sandbox that allows everything, and it is what Latch's executor code already warns about. The way out needs a decision on Latch's side. See [`docs/sandbox-findings.md`](docs/sandbox-findings.md) for the experiments and the three options.
+
 | Plugin | Command | macOS permission | Reads | Writes |
 |---|---|---|---|---|
 | [`contacts/`](contacts) | `plow-contacts` | `automation:com.apple.AddressBook` | `search`, `show`, `doctor` | none |
@@ -124,6 +126,7 @@ No test touches Contacts, Reminders, Notes or Calendar. There are three levels, 
 
 - All four plugins start: Node is found on Latch's `PATH`, the `/bin/sh` shim runs, and `--help` answers.
 - `doctor` works: each app's `.sdef` is readable and `plutil` runs.
+- With Apple Events allowed, the same four reads (`calendars`, `lists`, `folders`, `search`) all end in `SANDBOX_REFUSED` (`-10004`); a bare `osascript` in the replica, in JXA and in AppleScript, and even a sandbox with `(allow default)`, get the same refusal for collection reads (the apps do still answer a request for their own name).
 - A call **without** `apple_events` is stopped by the sandbox before it reaches the app: JXA throws error `-600` ("Application isn't running", with no number in the text), and the CLI reports it as `APP_UNAVAILABLE` with a message naming `apple_events=true`. (Before this check the CLI read only the message text and answered an opaque `APP_ERROR`; it now reads the error's `errorNumber`.)
 
 **Checked by reading Latch's source** (commit `006f4db`; nothing has been *run* under Latch itself yet):
@@ -134,8 +137,7 @@ No test touches Contacts, Reminders, Notes or Calendar. There are three levels, 
 
 **Not verified inside Latch:**
 
-- That it works end to end: no plugin here has run under Latch, and no data call has been run through the sandbox replica **with** Apple Events allowed.
-- That Notes, Reminders and Calendar accept Apple Events from a sandboxed sender. Latch documents some apps that do not (`-10004`, Mail's compose); this CLI reports that case as `SANDBOX_REFUSED`. Contacts and Messages are used this way by Latch itself.
+- Anything run under Latch itself: no plugin here has. (Through the sandbox replica the data calls are refused, as above.)
 - How Latch names the app when a call is denied: it looks for `tell application "X"` in the argv, which a plugin argv does not contain, so a denial is probably not attributed to the app's Automation row. The plugin only becomes ready after the owner grants `automation:<bundle id>` in the Plugins tab, which should prevent most denials.
 - That the owner is comfortable approving every call: with `apple_events` there is no "always allow" rule, so each search is a prompt unless the owner runs Latch in its approve-everything mode.
 - That Node 20+ is present on the owner's Mac (it is found on Latch's `PATH` when installed in `/usr/local/bin`, `/opt/homebrew/bin` or `~/.local/bin`). A pinned, self-contained binary per architecture (as `messages` and `gog` ship) would remove that requirement and is the natural next step.
@@ -151,5 +153,5 @@ Quatro plugins para o Latch, um por pasta: **contacts** (só leitura), **reminde
 
 - **Fluxo:** o agente chama `plow_run_command` → o Latch confere o argv na lista do manifesto (leitura roda; escrita pede aprovação do dono) → um shim acha o Node → o CLI valida tudo de forma estrita → **um** processo `osascript` curto fala com o app → uma única resposta JSON com `coverage` (a busca diz quando não viu tudo).
 - **Segurança:** notas protegidas nunca são lidas; apagar/editar exige id **e** título esperado; recusa evento recorrente, com convidados e calendário somente leitura; nada de rede, nada gravado em disco.
-- **Testado no Mac real** rodando o CLI direto (macOS 26.2, 02/10/2026); **ainda não testado dentro do Latch**: veja a lista em "Not verified inside Latch" (sandbox/Apple Events, Node no PATH, tempo de execução).
+- **Testado no Mac real** rodando o CLI direto (macOS 26.2, 02/10/2026). **Dentro do sandbox do Latch, hoje não funciona:** Contatos, Lembretes, Notas e Calendário recusam (erro `-10004`) qualquer processo em sandbox, mesmo com um sandbox que permite tudo; veja `docs/sandbox-findings.md` (experimentos reproduzíveis e três caminhos possíveis). O que falta decidir é do lado do Latch.
 - **Mudar o código:** edite `shared/src`, rode `node scripts/build-plugins.mjs`, rode os testes e faça o commit dos dois.
