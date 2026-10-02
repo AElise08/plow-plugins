@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 640" width="1240" height="640" role="img" aria-labelledby="t d">
+<title id="t">One call, six gates</title>
+<desc id="d">An agent call passes six gates in order: the Latch allowlist, the shim and strict parser, the dictionary check, the write guards, one short osascript process talking to the macOS app, and the answer. Each gate can refuse with its own code. A success is one JSON object.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#59636E"/></marker><marker id="arrowG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1A7F37"/></marker><filter id="sh" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#1f2328" flood-opacity="0.10"/></filter></defs>
+<rect x="1" y="1" width="1238" height="638" rx="18" fill="#FFFFFF" stroke="#D1D9E0"/>
+<text x="40" y="52" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#1F2328">One call, six gates</text>
+<text x="40" y="76" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" fill="#59636E">Every gate can say no, each with its own answer. None of them ever turns into an empty list.</text>
+<circle cx="790" cy="48" r="6" fill="#0969DA"/>
+<text x="803" y="52.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1F2328">Latch</text>
+<circle cx="868" cy="48" r="6" fill="#8250DF"/>
+<text x="881" y="52.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1F2328">this plugin (cli/)</text>
+<circle cx="1025" cy="48" r="6" fill="#BC4C00"/>
+<text x="1038" y="52.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1F2328">macOS app</text>
+<circle cx="790" cy="72" r="6" fill="#CF222E"/>
+<text x="803" y="76.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1F2328">refusal: the call stops here, with this code</text>
+<rect x="40" y="104" width="700" height="56" rx="12" fill="#F6F8FA" stroke="#D1D9E0"/>
+<text x="58" y="127" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2328">Agent</text>
+<text x="58" y="147" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#1F2328">plow_run_command(argv=["plow-reminders", "search", "--query", "x"])</text>
+<rect x="40" y="214" width="172" height="158" rx="12" fill="#FFFFFF" stroke="#D1D9E0" filter="url(#sh)"/>
+<rect x="40" y="214" width="172" height="6" rx="3" fill="#0969DA"/>
+<circle cx="64" cy="248" r="13" fill="#0969DA"/>
+<text x="64" y="253" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">1</text>
+<text x="86" y="247" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1F2328">Allowlist</text>
+<text x="86" y="263" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#59636E">Latch, before anything runs</text>
+<text x="56" y="296" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">argv tail vs manifest</text>
+<text x="56" y="315" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">read: runs</text>
+<text x="56" y="334" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">write: owner approves</text>
+<line x1="215" y1="248" x2="235" y2="248" stroke="#59636E" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="126.0" y1="372" x2="126.0" y2="402" stroke="#CF222E" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<rect x="40" y="402" width="172" height="82" rx="9" fill="#FFF0EF" stroke="#F5B8B3"/>
+<text x="52" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">not listed:</text>
+<text x="52" y="436" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">  refused by Latch</text>
+<text x="52" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">write declined:</text>
+<text x="52" y="466" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">  not run</text>
+<rect x="238" y="214" width="172" height="158" rx="12" fill="#FFFFFF" stroke="#D1D9E0" filter="url(#sh)"/>
+<rect x="238" y="214" width="172" height="6" rx="3" fill="#8250DF"/>
+<circle cx="262" cy="248" r="13" fill="#8250DF"/>
+<text x="262" y="253" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">2</text>
+<text x="284" y="247" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1F2328">Shim + parse</text>
+<text x="284" y="263" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#59636E">plugin entry</text>
+<text x="254" y="296" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">finds Node 20 or newer</text>
+<text x="254" y="315" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">closed set of flags only</text>
+<text x="254" y="334" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">ids and dates validated</text>
+<line x1="413" y1="248" x2="433" y2="248" stroke="#59636E" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="324.0" y1="372" x2="324.0" y2="402" stroke="#CF222E" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<rect x="238" y="402" width="172" height="67" rx="9" fill="#FFF0EF" stroke="#F5B8B3"/>
+<text x="250" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">RUNTIME_MISSING</text>
+<text x="250" y="436" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">INVALID_ARGUMENT</text>
+<text x="250" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">FORBIDDEN_COMMAND</text>
+<rect x="436" y="214" width="172" height="158" rx="12" fill="#FFFFFF" stroke="#D1D9E0" filter="url(#sh)"/>
+<rect x="436" y="214" width="172" height="6" rx="3" fill="#8250DF"/>
+<circle cx="460" cy="248" r="13" fill="#8250DF"/>
+<text x="460" y="253" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">3</text>
+<text x="482" y="247" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1F2328">Dictionary</text>
+<text x="482" y="263" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#59636E">no Apple Event yet</text>
+<text x="452" y="296" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">reads the app's own .sdef</text>
+<text x="452" y="315" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">every required property</text>
+<text x="452" y="334" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">must be there</text>
+<line x1="611" y1="248" x2="631" y2="248" stroke="#59636E" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="522.0" y1="372" x2="522.0" y2="402" stroke="#CF222E" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<rect x="436" y="402" width="172" height="52" rx="9" fill="#FFF0EF" stroke="#F5B8B3"/>
+<text x="448" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">BLOCKED_MISSING_</text>
+<text x="448" y="436" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">  PROPERTY</text>
+<rect x="634" y="214" width="172" height="158" rx="12" fill="#FFFFFF" stroke="#D1D9E0" filter="url(#sh)"/>
+<rect x="634" y="214" width="172" height="6" rx="3" fill="#8250DF"/>
+<circle cx="658" cy="248" r="13" fill="#8250DF"/>
+<text x="658" y="253" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">4</text>
+<text x="680" y="247" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1F2328">Write guards</text>
+<text x="680" y="263" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#59636E">update and delete only</text>
+<text x="650" y="296" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">title must still match</text>
+<text x="650" y="315" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">refuses locked notes,</text>
+<text x="650" y="334" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">repeating events, guests</text>
+<text x="650" y="353" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">and read-only calendars</text>
+<line x1="809" y1="248" x2="829" y2="248" stroke="#59636E" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="720.0" y1="372" x2="720.0" y2="402" stroke="#CF222E" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<rect x="634" y="402" width="172" height="52" rx="9" fill="#FFF0EF" stroke="#F5B8B3"/>
+<text x="646" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">GUARD_REFUSED</text>
+<text x="646" y="436" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">  nothing is modified</text>
+<rect x="832" y="214" width="172" height="158" rx="12" fill="#FFFFFF" stroke="#D1D9E0" filter="url(#sh)"/>
+<rect x="832" y="214" width="172" height="6" rx="3" fill="#BC4C00"/>
+<circle cx="856" cy="248" r="13" fill="#BC4C00"/>
+<text x="856" y="253" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">5</text>
+<text x="878" y="247" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1F2328">One process</text>
+<text x="878" y="263" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#59636E">osascript to the app</text>
+<text x="848" y="296" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">static JXA code</text>
+<text x="848" y="315" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">your values travel as</text>
+<text x="848" y="334" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">JSON argv, never as code</text>
+<line x1="1007" y1="248" x2="1027" y2="248" stroke="#59636E" stroke-width="1.6" marker-end="url(#arrow)"/>
+<line x1="918.0" y1="372" x2="918.0" y2="402" stroke="#CF222E" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<rect x="832" y="402" width="172" height="82" rx="9" fill="#FFF0EF" stroke="#F5B8B3"/>
+<text x="844" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">PERMISSION_DENIED</text>
+<text x="844" y="436" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">TIMEOUT</text>
+<text x="844" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">NOT_FOUND</text>
+<text x="844" y="466" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">APP_ERROR</text>
+<rect x="1030" y="214" width="172" height="158" rx="12" fill="#FFFFFF" stroke="#D1D9E0" filter="url(#sh)"/>
+<rect x="1030" y="214" width="172" height="6" rx="3" fill="#8250DF"/>
+<circle cx="1054" cy="248" r="13" fill="#8250DF"/>
+<text x="1054" y="253" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">6</text>
+<text x="1076" y="247" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1F2328">The answer</text>
+<text x="1076" y="263" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#59636E">back in the plugin</text>
+<text x="1046" y="296" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">schema checked</text>
+<text x="1046" y="315" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">capped at 32 KiB</text>
+<text x="1046" y="334" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">ONE JSON object</text>
+<line x1="1116.0" y1="372" x2="1116.0" y2="402" stroke="#CF222E" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<rect x="1030" y="402" width="172" height="37" rx="9" fill="#FFF0EF" stroke="#F5B8B3"/>
+<text x="1042" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">ADAPTER_SCHEMA</text>
+<path d="M126.0,160 L126.0,212" stroke="#59636E" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+<rect x="40" y="512" width="1160" height="86" rx="12" fill="#DAFBE1" stroke="#7DD79A"/>
+<text x="60" y="539" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#1A7F37">Success: one JSON object on stdout, plus an exit code</text>
+<text x="60" y="561" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12.5" fill="#1F2328">{ schema_version, ok, source, items, warnings, coverage }</text>
+<text x="60" y="582" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">A search that did not see everything is still ok: true, with coverage.complete: false and the reasons. A write that may have happened reports write_outcome: unknown.</text>
+<path d="M1116.0,439 L1116.0,510" stroke="#1A7F37" stroke-width="2" fill="none" marker-end="url(#arrowG)"/>
+</svg>

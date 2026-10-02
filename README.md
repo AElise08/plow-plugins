@@ -13,7 +13,14 @@ All four permission keys are ones Latch already knows (`AUTOMATION_APPS`), none 
 
 ## The flow, end to end
 
-One call, from the agent to the app and back. The example is `plow-reminders search`; every plugin follows the same path.
+<p align="center">
+  <img src="docs/flow.svg" alt="One call passes six gates in order: 1 the Latch allowlist, 2 the shim and strict parser, 3 the dictionary check, 4 the write guards, 5 one short osascript process talking to the macOS app, 6 the answer. Each gate can refuse with its own code; a success is one JSON object." width="100%">
+</p>
+
+One call, from the agent to the app and back (`plow-reminders search` here; every plugin follows the same path). It has to clear six gates. Each one can say no with its own, distinct answer, and none of them ever turns into an empty list.
+
+<details>
+<summary>The same flow as a sequence diagram: who talks to whom</summary>
 
 ```mermaid
 sequenceDiagram
@@ -48,43 +55,18 @@ sequenceDiagram
     Latch-->>Agent: result
 ```
 
-### Every layer can say no
+</details>
 
-A call has to get past six gates, in this order. Each one refuses with its own, distinct answer, and none of them ever turns into an empty list.
+### What happens at each gate
 
-```mermaid
-flowchart TD
-    A(["Agent call"]) --> B{"1. Latch allowlist"}
-    B -- "not listed" --> X1["Refused by Latch"]
-    B -- "listed as a write" --> W{"Owner approves?"}
-    W -- "no" --> X2["Not run"]
-    W -- "yes" --> C{"2. Strict CLI parser"}
-    B -- "listed as a read" --> C
-    C -- "bad flag, id or date" --> E1["INVALID_ARGUMENT"]
-    C -- "edit, move, unlock, execute" --> E2["FORBIDDEN_COMMAND"]
-    C -- "valid" --> D{"3. Dictionary has every required property"}
-    D -- "missing" --> E3["BLOCKED_MISSING_PROPERTY"]
-    D -- "present" --> F{"4. Write guards, for update and delete"}
-    F -- "title mismatch, locked note, repeating event, guests, read-only calendar" --> E4["GUARD_REFUSED, nothing modified"]
-    F -- "pass, or a read" --> G{"5. The app answers"}
-    G -- "no Automation consent" --> E5["PERMISSION_DENIED"]
-    G -- "too slow, process killed" --> E6["TIMEOUT"]
-    G -- "unknown id" --> E7["NOT_FOUND"]
-    G -- "answers" --> H(["6. One JSON object, ok true"])
-    H --> I["coverage.complete says if everything was scanned"]
-```
-
-### What happens at each step
-
-| # | Stage | Where | What it does | Can end the call with |
+| # | Gate | Where | What it does | Can end the call with |
 |---|---|---|---|---|
-| 1 | **Allowlist** | Latch | Matches the agent's argv tail against `argv.read` / `argv.write`. Both lists are generated from the CLI's own command table (`scripts/build-plugins.mjs`), so the manifest can never promise more or less than the CLI does. A write needs the owner's approval. | refused by Latch |
-| 2 | **Shim** | `cli/bin/plow-<app>.sh` | `exec.argv` is `["/bin/sh", "cli/bin/plow-<app>.sh"]`. It looks for Node 20+ (a GUI app's `PATH` is often minimal) and hands over to the launcher. | `RUNTIME_MISSING`, exit 9, as a JSON object |
-| 3 | **Strict parse** | CLI | The launcher adds the app group, and the parser accepts only a closed set of flags: no positionals, no repeats, ids and dates validated. Quotes, `$`, newlines and `"; do shell script ..."` are just data. | `INVALID_ARGUMENT`, `FORBIDDEN_COMMAND` |
-| 4 | **Dictionary check** | CLI | Reads the app's own `.sdef` (no Apple Event) and blocks the command if a required property is missing; optional ones show up as unsupported. | `BLOCKED_MISSING_PROPERTY` |
-| 5 | **Guards** | JXA script | `update` / `delete` need the id **and** the title the caller saw (`--expect-title`). Locked notes, repeating events, events with guests and read-only calendars are refused before anything is touched. | `GUARD_REFUSED` (with a `reason`) |
-| 6 | **One short process** | `osascript -l JavaScript` | Static code; the values travel only as a JSON argv element, never as code. Reads are getters only, and each write mode has exactly one mutation. Killed on timeout; stderr is never forwarded (it can hold personal text). | `PERMISSION_DENIED`, `TIMEOUT`, `NOT_FOUND`, `APP_ERROR` |
-| 7 | **The answer** | CLI | Checks the schema, caps the output at 32 KiB (truncation is always declared) and prints one object `{schema_version, ok, source, items, warnings, coverage}` plus an exit code. A failure is `ok: false` with `items` and `coverage` set to `null`. | `ADAPTER_SCHEMA` |
+| 1 | **Allowlist** | Latch | Matches the agent's argv tail against `argv.read` / `argv.write`. Both lists are generated from the CLI's own command table (`scripts/build-plugins.mjs`), so the manifest can never promise more or less than the CLI does. A read runs; a write needs the owner's approval. | refused by Latch, or the owner declines |
+| 2 | **Shim + strict parse** | `cli/bin/plow-<app>.sh`, then the CLI | `exec.argv` is `["/bin/sh", "cli/bin/plow-<app>.sh"]`. It finds Node 20+ (a GUI app's `PATH` is often minimal), then the launcher adds the app group and the parser accepts only a closed set of flags: no positionals, no repeats, ids and dates validated. Quotes, `$`, newlines and `"; do shell script ..."` are just data. | `RUNTIME_MISSING` (exit 9, still JSON), `INVALID_ARGUMENT`, `FORBIDDEN_COMMAND` |
+| 3 | **Dictionary check** | CLI | Reads the app's own `.sdef` (no Apple Event yet) and blocks the command if a required property is missing; optional ones show up as unsupported. | `BLOCKED_MISSING_PROPERTY` |
+| 4 | **Write guards** | JXA script | `update` / `delete` need the id **and** the title the caller saw (`--expect-title`). Locked notes, repeating events, events with guests and read-only calendars are refused before anything is touched. | `GUARD_REFUSED` (with a `reason`) |
+| 5 | **One short process** | `osascript -l JavaScript` | Static code; the values travel only as a JSON argv element, never as code. Reads are getters only, and each write mode has exactly one mutation. Killed on timeout; stderr is never forwarded (it can hold personal text). | `PERMISSION_DENIED`, `TIMEOUT`, `NOT_FOUND`, `APP_ERROR` |
+| 6 | **The answer** | CLI | Checks the schema, caps the output at 32 KiB (truncation is always declared) and prints one object `{schema_version, ok, source, items, warnings, coverage}` plus an exit code. A failure is `ok: false` with `items` and `coverage` set to `null`. | `ADAPTER_SCHEMA` |
 
 A search that did not see everything is not an error: it is `ok: true` with `coverage.complete: false` and the reasons (`SCAN_LIMIT`, `TIME_LIMIT`, `PROTECTED_BODY_SKIPPED`, `RECURRING_NOT_EXPANDED`, ...). A write that fails in a way that may have happened reports `write_outcome: unknown`, so nobody retries blindly.
 

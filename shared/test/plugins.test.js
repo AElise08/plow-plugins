@@ -170,3 +170,17 @@ test('the shipped CLI copies obey the same bans: no network, no file writes, get
     }
   }
 });
+
+test('the README\'s flow diagram exists, is well-formed SVG, and names all six gates', () => {
+  const readme = read(path.join(REPO, 'README.md'));
+  const ref = /<img src="(docs\/[^"]+\.svg)"/.exec(readme);
+  assert.ok(ref, 'README must embed the flow diagram');
+  const svg = read(path.join(REPO, ref[1]));
+  assert.ok(svg.startsWith('<svg'));
+  assert.equal((svg.match(/<svg\b/g) || []).length, 1);
+  assert.equal((svg.match(/<\/svg>/g) || []).length, 1);
+  for (const word of ['Allowlist', 'Shim + parse', 'Dictionary', 'Write guards', 'One process', 'The answer', 'GUARD_REFUSED', 'PERMISSION_DENIED', 'BLOCKED_MISSING_']) {
+    assert.ok(svg.includes(word), `diagram is missing "${word}"`);
+  }
+  assert.ok(readme.includes('| 6 | **The answer**'), 'the table must match the six gates in the diagram');
+});
