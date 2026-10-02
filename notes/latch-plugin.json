@@ -1,0 +1,16 @@
+{
+  "name": "notes",
+  "title": "Notes",
+  "summary": "Find and read your notes (never locked ones), add and delete them, right on this Mac.",
+  "version": "0.1.0",
+  "command": "plow-notes",
+  "runtime": { "binaries": [] },
+  "requires": { "permissions": ["automation:com.apple.Notes"] },
+  "exec": { "argv": ["/bin/sh", "cli/bin/plow-notes.sh"] },
+  "env": {},
+  "argv": {
+    "read": [["folders"], ["search"], ["show"], ["doctor"], ["--help"]],
+    "write": [["create"], ["delete"]]
+  },
+  "skill": "skill.md"
+}

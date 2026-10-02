@@ -1,0 +1,16 @@
+{
+  "name": "contacts",
+  "title": "Contacts",
+  "summary": "Find a person and their phones and emails, right on this Mac.",
+  "version": "0.1.0",
+  "command": "plow-contacts",
+  "runtime": { "binaries": [] },
+  "requires": { "permissions": ["automation:com.apple.AddressBook"] },
+  "exec": { "argv": ["/bin/sh", "cli/bin/plow-contacts.sh"] },
+  "env": {},
+  "argv": {
+    "read": [["search"], ["show"], ["doctor"], ["--help"]],
+    "write": []
+  },
+  "skill": "skill.md"
+}

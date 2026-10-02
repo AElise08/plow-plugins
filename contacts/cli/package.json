@@ -1,0 +1,7 @@
+{
+  "name": "plow-contacts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Runtime for the contacts Latch plugin (generated; see scripts/build-plugins.mjs)"
+}

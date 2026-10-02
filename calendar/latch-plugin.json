@@ -1,0 +1,16 @@
+{
+  "name": "calendar",
+  "title": "Calendar",
+  "summary": "Check your calendar; add, change and delete events, right on this Mac.",
+  "version": "0.1.0",
+  "command": "plow-calendar",
+  "runtime": { "binaries": [] },
+  "requires": { "permissions": ["automation:com.apple.iCal"] },
+  "exec": { "argv": ["/bin/sh", "cli/bin/plow-calendar.sh"] },
+  "env": {},
+  "argv": {
+    "read": [["calendars"], ["search"], ["show"], ["doctor"], ["--help"]],
+    "write": [["delete"], ["create"], ["update"]]
+  },
+  "skill": "skill.md"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "reminders",
+  "title": "Reminders",
+  "summary": "Find, add and delete reminders, right on this Mac.",
+  "version": "0.1.0",
+  "command": "plow-reminders",
+  "runtime": { "binaries": [] },
+  "requires": { "permissions": ["automation:com.apple.reminders"] },
+  "exec": { "argv": ["/bin/sh", "cli/bin/plow-reminders.sh"] },
+  "env": {},
+  "argv": {
+    "read": [["lists"], ["search"], ["show"], ["doctor"], ["--help"]],
+    "write": [["create"], ["delete"]]
+  },
+  "skill": "skill.md"
+}

@@ -1,0 +1,121 @@
+# plow-plugins
+
+[Latch](https://github.com/plow-pbc/latch) plugins that let an agent work with the owner's **Contacts, Reminders, Notes and Calendar** on this Mac, modelled on Latch's [`messages`](https://github.com/plow-pbc/latch/tree/main/apps/desktop/plugins/messages) plugin. Each plugin is its own folder with the three things Latch expects: a CLI, a `latch-plugin.json` manifest, and a `skill.md` that teaches the agent how to use the CLI.
+
+| Plugin | Command | macOS permission | Reads | Writes (owner approves each) |
+|---|---|---|---|---|
+| [`contacts/`](contacts) | `plow-contacts` | `automation:com.apple.AddressBook` | `search`, `show`, `doctor` | none |
+| [`reminders/`](reminders) | `plow-reminders` | `automation:com.apple.reminders` | `lists`, `search`, `show`, `doctor` | `create`, `delete` |
+| [`notes/`](notes) | `plow-notes` | `automation:com.apple.Notes` | `folders`, `search`, `show`, `doctor` | `create`, `delete` |
+| [`calendar/`](calendar) | `plow-calendar` | `automation:com.apple.iCal` | `calendars`, `search`, `show`, `doctor` | `create`, `update`, `delete` |
+
+All four permission keys are ones Latch already knows (`AUTOMATION_APPS`), none needs Full Disk Access, and no plugin has a network path.
+
+## The flow, end to end
+
+```
+ agent                         Latch                                    this plugin                          macOS
+   |                             |                                          |                                  |
+   | plow_run_command(           |                                          |                                  |
+   |  argv=["plow-reminders",    |                                          |                                  |
+   |   "search","--query","x"])  |                                          |                                  |
+   |---------------------------->| 1. classifyArgv(manifest, argv):         |                                  |
+   |                             |    tail ["search",...] vs argv.read      |                                  |
+   |                             |    -> read: run   | argv.write: owner    |                                  |
+   |                             |    approves       | no match: refused    |                                  |
+   |                             |------------------------------------------>| 2. /bin/sh cli/bin/plow-reminders.sh
+   |                             |                                          |    finds Node >= 20, runs the launcher
+   |                             |                                          | 3. launcher adds the app group, then the
+   |                             |                                          |    CLI parses STRICTLY: closed flags,
+   |                             |                                          |    no positionals, ids/dates validated,
+   |                             |                                          |    anything else is refused
+   |                             |                                          | 4. reads the app's scripting dictionary
+   |                             |                                          |    (doctor-style check, no Apple Event)
+   |                             |                                          | 5. ONE short osascript (JXA) process:
+   |                             |                                          |    static code; your values travel only
+   |                             |                                          |    as a JSON argv element, never as code
+   |                             |                                          |---------------------------------->| Reminders
+   |                             |                                          |   Automation consent:             | (reads, or
+   |                             |                                          |   automation:com.apple.reminders  |  one write)
+   |                             |                                          |<----------------------------------|
+   |                             |                                          | 6. schema-checks the answer, applies the
+   |                             |                                          |    guards, caps size, prints ONE JSON object
+   |<----------------------------|<-----------------------------------------| 7. exit code + sanitised stderr code
+```
+
+1. **The allowlist.** `argv.read` / `argv.write` in the manifest are generated from the CLI's own command table (`scripts/build-plugins.mjs`), so the allowlist can never promise more or less than the CLI does. A command that is not listed is refused by Latch before it runs.
+2. **The shim.** `exec.argv` is `["/bin/sh", "cli/bin/plow-<app>.sh"]`, which locates Node 20+ (a GUI app's `PATH` is often minimal) and answers with a JSON `RUNTIME_MISSING` error (exit 9) if there is none.
+3. **Strict parsing.** Unknown flags, repeated flags, positionals, bad ids and bad dates are `INVALID_ARGUMENT`. Edit/complete/move/unlock/open/execute verbs are `FORBIDDEN_COMMAND`. Text such as quotes, `$`, newlines and `"; do shell script ..."` is just data.
+4. **Dictionary first.** Before any call, the CLI reads the app's own `.sdef` and blocks the command if a required property is missing (`BLOCKED_MISSING_PROPERTY`); optional ones show up as unsupported.
+5. **One short process.** Static JXA, one `osascript -l JavaScript` per call, killed on timeout, stderr never forwarded (it can contain personal text). Reads are getters only; the write scripts live in a separate folder and each mode has exactly one mutation.
+6. **The answer.** One JSON object `{schema_version, ok, source, items, warnings, coverage}`, at most 32 KiB, truncation always declared. A failure is `ok: false` with `items`/`coverage` `null` and a non-zero exit code, **never** an empty list. A search that did not see everything says `coverage.complete: false` and why.
+
+### Safety model in one paragraph
+
+Reads are bounded (`--limit`, `--max-chars`, `--scan-limit`, a timeout, a soft deadline). Locked notes are never read, with a double guard in the adapter and in the core. A write is one item at a time; `update`/`delete` need the id **and** the title the caller saw (`--expect-title`), and refuse locked notes, repeating events, events with guests and read-only calendars (`GUARD_REFUSED`, nothing modified). A failed write reports `write_outcome: unknown|not_performed` so nobody retries blindly. macOS Automation is a permission to *control* an app: the "read-only for contacts" and "one item at a time" restrictions are enforced here, not by macOS.
+
+## Repository layout
+
+```
+contacts/ reminders/ notes/ calendar/   one folder per plugin
+  latch-plugin.json   manifest (generated: argv allowlist and permission come from the CLI)
+  skill.md            agent instructions (hand-written; every example is checked against the allowlist)
+  README.md           commands, permission, contract, limits, what was and was not verified
+  cli/                the runnable CLI (generated from shared/; committed because Latch installs a folder)
+shared/               single source of truth for the CLI core, the JXA scripts and ALL tests (not a plugin)
+scripts/
+  build-plugins.mjs          regenerate every plugin's cli/ and manifest from shared/   (--check: fail on drift)
+  check-against-latch.mjs    run Latch's real manifest parser and argv allowlist on these plugins
+```
+
+To change behaviour: edit `shared/src`, run `node scripts/build-plugins.mjs`, run the tests, commit both.
+
+## Try it
+
+Requirements: macOS, Node 20+. Standalone, outside Latch:
+
+```sh
+sh contacts/cli/bin/plow-contacts.sh --help        # prints the commands; never touches the app
+sh contacts/cli/bin/plow-contacts.sh doctor        # checks the dictionary; asks for no permission
+sh contacts/cli/bin/plow-contacts.sh search --query "Ana"   # first real call: macOS may ask for Automation
+```
+
+In Latch, copy a plugin folder to `apps/desktop/plugins/<name>/` and run `just stage-plugins <name>` (the plugins declare no binaries, so staging only copies the folder), or install it under `$DOMO_HOME/plugins/<name>`. The agent then calls, for example,
+`plow_run_command(argv=["plow-calendar", "search", "--from", "2026-10-05", "--to", "2026-10-12", "--tz", "America/Sao_Paulo"])`.
+
+Whatever a command prints is returned to the model provider as conversation context. "Local" describes the access, not where the results end up.
+
+## Tests and checks
+
+```sh
+node --test "shared/test/*.test.js"              # the whole suite
+node scripts/build-plugins.mjs --check           # plugin folders match shared/
+node scripts/check-against-latch.mjs ../latch    # Latch's real parser + allowlist (needs a checkout, Node >= 22.18)
+```
+
+No test touches Contacts, Reminders, Notes or Calendar. There are three levels, kept apart from the real apps: a high-level fake backend over fictional data; the **real JXA scripts** run inside a Node `vm` against a fictional object model (it proves our script logic and guards, not Apple's behaviour); and the real CLI process over the fake. Static checks assert there is no network, no file writing, getter-only read scripts and per-function limits on the write scripts. Manifests and every `argv=[...]` example in each `skill.md` are checked against a port of Latch's rules (`shared/test/support/latch-rules.js`, pinned to Latch commit `006f4db`) and, with `check-against-latch.mjs`, against the real code.
+
+## Status
+
+**Checked on a real Mac** (macOS 26.2, Node 24, 2026-10-02), running the CLI directly with fictional "Teste MacQuery" items: contacts search/show; reminders search/show/create/delete; notes title and text search, `show` (including a locked note whose body was never read), create and delete; calendar list, window search, create, update and delete. Per-plugin READMEs list exactly what ran and what did not.
+
+**Not verified inside Latch** (nothing here has run under Latch yet):
+
+- That Latch appends the agent's argv tail to `exec.argv` (`/bin/sh cli/bin/plow-<app>.sh <tail>`) and runs it in the plugin's directory, as the manifest comments describe.
+- That Latch's command sandbox lets `osascript` send Apple Events and lets the CLI read the app's `.sdef` under `/System/Applications` — if not, calls fail as `PERMISSION_DENIED` or `BLOCKED_MISSING_PROPERTY` (dictionary unreadable).
+- Which process macOS names in the Automation prompt, and that `automation:<bundle id>` is the right row for a call made through Latch's runner.
+- That a call that takes tens of seconds (a calendar window search) fits Latch's run budget; the skill tells the agent to expect a `pending` handle.
+- That Node 20+ is present on the owner's Mac. A pinned, self-contained binary per architecture (as `messages` and `gog` ship) would remove that requirement and is the natural next step.
+
+Also open on the apps themselves: all-day events and reminders, `--folder-id` / `--list-id` scoped writes, and the guard refusals against real data — see each plugin's README.
+
+---
+
+## Resumo em português
+
+Quatro plugins para o Latch, um por pasta: **contacts** (só leitura), **reminders**, **notes** e **calendar** (leitura + criar/apagar, e editar no calendário). Cada pasta tem o CLI (`cli/`), o manifesto `latch-plugin.json` e a `skill.md` que ensina o agente; o `README.md` de cada uma documenta comandos, permissão, limites e o que foi testado.
+
+- **Fluxo:** o agente chama `plow_run_command` → o Latch confere o argv na lista do manifesto (leitura roda; escrita pede aprovação do dono) → um shim acha o Node → o CLI valida tudo de forma estrita → **um** processo `osascript` curto fala com o app → uma única resposta JSON com `coverage` (a busca diz quando não viu tudo).
+- **Segurança:** notas protegidas nunca são lidas; apagar/editar exige id **e** título esperado; recusa evento recorrente, com convidados e calendário somente leitura; nada de rede, nada gravado em disco.
+- **Testado no Mac real** rodando o CLI direto (macOS 26.2, 02/10/2026); **ainda não testado dentro do Latch**: veja a lista em "Not verified inside Latch" (sandbox/Apple Events, Node no PATH, tempo de execução).
+- **Mudar o código:** edite `shared/src`, rode `node scripts/build-plugins.mjs`, rode os testes e faça o commit dos dois.

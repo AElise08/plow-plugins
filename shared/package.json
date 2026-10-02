@@ -1,0 +1,6 @@
+{
+  "name": "plow-plugins-shared",
+  "private": true,
+  "description": "Single source of truth for the plow-plugins CLI core and its tests (not a plugin).",
+  "scripts": { "test": "node --test \"test/*.test.js\"" }
+}
