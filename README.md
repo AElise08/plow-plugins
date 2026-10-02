@@ -13,42 +13,80 @@ All four permission keys are ones Latch already knows (`AUTOMATION_APPS`), none 
 
 ## The flow, end to end
 
-```
- agent                         Latch                                    this plugin                          macOS
-   |                             |                                          |                                  |
-   | plow_run_command(           |                                          |                                  |
-   |  argv=["plow-reminders",    |                                          |                                  |
-   |   "search","--query","x"])  |                                          |                                  |
-   |---------------------------->| 1. classifyArgv(manifest, argv):         |                                  |
-   |                             |    tail ["search",...] vs argv.read      |                                  |
-   |                             |    -> read: run   | argv.write: owner    |                                  |
-   |                             |    approves       | no match: refused    |                                  |
-   |                             |------------------------------------------>| 2. /bin/sh cli/bin/plow-reminders.sh
-   |                             |                                          |    finds Node >= 20, runs the launcher
-   |                             |                                          | 3. launcher adds the app group, then the
-   |                             |                                          |    CLI parses STRICTLY: closed flags,
-   |                             |                                          |    no positionals, ids/dates validated,
-   |                             |                                          |    anything else is refused
-   |                             |                                          | 4. reads the app's scripting dictionary
-   |                             |                                          |    (doctor-style check, no Apple Event)
-   |                             |                                          | 5. ONE short osascript (JXA) process:
-   |                             |                                          |    static code; your values travel only
-   |                             |                                          |    as a JSON argv element, never as code
-   |                             |                                          |---------------------------------->| Reminders
-   |                             |                                          |   Automation consent:             | (reads, or
-   |                             |                                          |   automation:com.apple.reminders  |  one write)
-   |                             |                                          |<----------------------------------|
-   |                             |                                          | 6. schema-checks the answer, applies the
-   |                             |                                          |    guards, caps size, prints ONE JSON object
-   |<----------------------------|<-----------------------------------------| 7. exit code + sanitised stderr code
+One call, from the agent to the app and back. The example is `plow-reminders search`; every plugin follows the same path.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Agent
+    actor Owner
+    participant Latch
+    participant Shim as plow-app.sh
+    participant CLI as plow-app CLI on Node
+    participant OSA as osascript (JXA)
+    participant App as macOS app
+
+    Agent->>Latch: plow_run_command argv plow-reminders search --query x
+    Latch->>Latch: match the argv tail against argv.read and argv.write
+    alt not listed in the manifest
+        Latch-->>Agent: refused, nothing runs
+    else listed under argv.write
+        Latch->>Owner: approve this write?
+        Owner-->>Latch: yes
+    else listed under argv.read
+        Note over Latch: no approval needed
+    end
+    Latch->>Shim: /bin/sh cli/bin/plow-reminders.sh search --query x
+    Shim->>CLI: find Node 20 or newer, run the launcher
+    CLI->>CLI: strict parse, then read the app dictionary
+    CLI->>OSA: one short process, static JXA, your values as JSON argv
+    OSA->>App: Apple Events, needs Automation consent
+    App-->>OSA: values
+    OSA-->>CLI: JSON
+    CLI->>CLI: check schema, apply guards, cap at 32 KiB
+    CLI-->>Latch: ONE JSON object, exit code, sanitised stderr code
+    Latch-->>Agent: result
 ```
 
-1. **The allowlist.** `argv.read` / `argv.write` in the manifest are generated from the CLI's own command table (`scripts/build-plugins.mjs`), so the allowlist can never promise more or less than the CLI does. A command that is not listed is refused by Latch before it runs.
-2. **The shim.** `exec.argv` is `["/bin/sh", "cli/bin/plow-<app>.sh"]`, which locates Node 20+ (a GUI app's `PATH` is often minimal) and answers with a JSON `RUNTIME_MISSING` error (exit 9) if there is none.
-3. **Strict parsing.** Unknown flags, repeated flags, positionals, bad ids and bad dates are `INVALID_ARGUMENT`. Edit/complete/move/unlock/open/execute verbs are `FORBIDDEN_COMMAND`. Text such as quotes, `$`, newlines and `"; do shell script ..."` is just data.
-4. **Dictionary first.** Before any call, the CLI reads the app's own `.sdef` and blocks the command if a required property is missing (`BLOCKED_MISSING_PROPERTY`); optional ones show up as unsupported.
-5. **One short process.** Static JXA, one `osascript -l JavaScript` per call, killed on timeout, stderr never forwarded (it can contain personal text). Reads are getters only; the write scripts live in a separate folder and each mode has exactly one mutation.
-6. **The answer.** One JSON object `{schema_version, ok, source, items, warnings, coverage}`, at most 32 KiB, truncation always declared. A failure is `ok: false` with `items`/`coverage` `null` and a non-zero exit code, **never** an empty list. A search that did not see everything says `coverage.complete: false` and why.
+### Every layer can say no
+
+A call has to get past six gates, in this order. Each one refuses with its own, distinct answer, and none of them ever turns into an empty list.
+
+```mermaid
+flowchart TD
+    A(["Agent call"]) --> B{"1. Latch allowlist"}
+    B -- "not listed" --> X1["Refused by Latch"]
+    B -- "listed as a write" --> W{"Owner approves?"}
+    W -- "no" --> X2["Not run"]
+    W -- "yes" --> C{"2. Strict CLI parser"}
+    B -- "listed as a read" --> C
+    C -- "bad flag, id or date" --> E1["INVALID_ARGUMENT"]
+    C -- "edit, move, unlock, execute" --> E2["FORBIDDEN_COMMAND"]
+    C -- "valid" --> D{"3. Dictionary has every required property"}
+    D -- "missing" --> E3["BLOCKED_MISSING_PROPERTY"]
+    D -- "present" --> F{"4. Write guards, for update and delete"}
+    F -- "title mismatch, locked note, repeating event, guests, read-only calendar" --> E4["GUARD_REFUSED, nothing modified"]
+    F -- "pass, or a read" --> G{"5. The app answers"}
+    G -- "no Automation consent" --> E5["PERMISSION_DENIED"]
+    G -- "too slow, process killed" --> E6["TIMEOUT"]
+    G -- "unknown id" --> E7["NOT_FOUND"]
+    G -- "answers" --> H(["6. One JSON object, ok true"])
+    H --> I["coverage.complete says if everything was scanned"]
+```
+
+### What happens at each step
+
+| # | Stage | Where | What it does | Can end the call with |
+|---|---|---|---|---|
+| 1 | **Allowlist** | Latch | Matches the agent's argv tail against `argv.read` / `argv.write`. Both lists are generated from the CLI's own command table (`scripts/build-plugins.mjs`), so the manifest can never promise more or less than the CLI does. A write needs the owner's approval. | refused by Latch |
+| 2 | **Shim** | `cli/bin/plow-<app>.sh` | `exec.argv` is `["/bin/sh", "cli/bin/plow-<app>.sh"]`. It looks for Node 20+ (a GUI app's `PATH` is often minimal) and hands over to the launcher. | `RUNTIME_MISSING`, exit 9, as a JSON object |
+| 3 | **Strict parse** | CLI | The launcher adds the app group, and the parser accepts only a closed set of flags: no positionals, no repeats, ids and dates validated. Quotes, `$`, newlines and `"; do shell script ..."` are just data. | `INVALID_ARGUMENT`, `FORBIDDEN_COMMAND` |
+| 4 | **Dictionary check** | CLI | Reads the app's own `.sdef` (no Apple Event) and blocks the command if a required property is missing; optional ones show up as unsupported. | `BLOCKED_MISSING_PROPERTY` |
+| 5 | **Guards** | JXA script | `update` / `delete` need the id **and** the title the caller saw (`--expect-title`). Locked notes, repeating events, events with guests and read-only calendars are refused before anything is touched. | `GUARD_REFUSED` (with a `reason`) |
+| 6 | **One short process** | `osascript -l JavaScript` | Static code; the values travel only as a JSON argv element, never as code. Reads are getters only, and each write mode has exactly one mutation. Killed on timeout; stderr is never forwarded (it can hold personal text). | `PERMISSION_DENIED`, `TIMEOUT`, `NOT_FOUND`, `APP_ERROR` |
+| 7 | **The answer** | CLI | Checks the schema, caps the output at 32 KiB (truncation is always declared) and prints one object `{schema_version, ok, source, items, warnings, coverage}` plus an exit code. A failure is `ok: false` with `items` and `coverage` set to `null`. | `ADAPTER_SCHEMA` |
+
+A search that did not see everything is not an error: it is `ok: true` with `coverage.complete: false` and the reasons (`SCAN_LIMIT`, `TIME_LIMIT`, `PROTECTED_BODY_SKIPPED`, `RECURRING_NOT_EXPANDED`, ...). A write that fails in a way that may have happened reports `write_outcome: unknown`, so nobody retries blindly.
 
 ### Safety model in one paragraph
 
