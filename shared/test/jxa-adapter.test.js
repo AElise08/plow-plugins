@@ -57,6 +57,7 @@ test('osascript failures map to distinct states and stderr text is never forward
   const cases = [
     [`execution error: Not authorized to send Apple events to Notes ${personal}. (-1743)`, 'PERMISSION_DENIED'],
     ['execution error: Application isn’t running. (-600)', 'APP_UNAVAILABLE'],
+    ['execution error: sandboxed sender refused. (-10004)', 'SANDBOX_REFUSED'],
     ['execution error: doesn’t understand the message. (-1708)', 'METHOD_UNAVAILABLE'],
     ['execution error: timed out. (-1712)', 'TIMEOUT'],
     [`execution error: ${personal} (-2700)`, 'APP_ERROR'],
@@ -78,6 +79,9 @@ test('script-reported errors: scope/item -1728 is NOT_FOUND, others are structur
   assert.equal(mapAppError(-1728, 'item').code, 'NOT_FOUND');
   assert.equal(mapAppError(-1728, 'app').code, 'APP_ERROR');
   assert.equal(mapAppError(-1743, 'item').code, 'PERMISSION_DENIED');
+  assert.equal(mapAppError(-10004, 'item').code, 'SANDBOX_REFUSED');
+  assert.ok(mapAppError(-1743, 'item').detail.includes('apple_events=true'), 'the denial hint names the Latch requirement');
+  assert.ok(!mapAppError(-10004, 'item').detail.includes('Automation permission is'), 'not blamed on a missing permission');
   assert.equal(mapAppError(null, 'unknown').extra.app_error_number, null);
 });
 

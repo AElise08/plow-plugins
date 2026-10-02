@@ -184,3 +184,18 @@ test('the README\'s flow diagram exists, is well-formed SVG, and names all six g
   }
   assert.ok(readme.includes('| 6 | **The answer**'), 'the table must match the six gates in the diagram');
 });
+
+test('skill.md: every example that reaches the app declares apple_events=true (Latch\'s sandbox denies Apple Events otherwise); doctor and --help do not', () => {
+  for (const app of APPS) {
+    const doc = read(path.join(REPO, app, 'skill.md'));
+    const calls = [...doc.matchAll(/plow_run_command\((argv=\[[^\]]*\][^)\n]*)\)/g)].map((x) => x[1]);
+    assert.ok(calls.length >= 3, `${app}: examples`);
+    for (const call of calls) {
+      const argv = JSON.parse(/argv=(\[[^\]]*\])/.exec(call)[1]);
+      const touchesApp = !['doctor', '--help'].includes(argv[1]);
+      assert.equal(/apple_events=true/.test(call), touchesApp, `${app}: ${call}`);
+    }
+    assert.ok(/\*\*Always pass `apple_events=true`\*\*/.test(doc), `${app}: states the rule`);
+    assert.ok(/SANDBOX_REFUSED/.test(doc), `${app}: explains SANDBOX_REFUSED`);
+  }
+});

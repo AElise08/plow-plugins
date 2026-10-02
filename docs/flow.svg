@@ -15,22 +15,22 @@
 <text x="803" y="76.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1F2328">refusal: the call stops here, with this code</text>
 <rect x="40" y="104" width="700" height="56" rx="12" fill="#F6F8FA" stroke="#D1D9E0"/>
 <text x="58" y="127" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2328">Agent</text>
-<text x="58" y="147" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#1F2328">plow_run_command(argv=["plow-reminders", "search", "--query", "x"])</text>
+<text x="58" y="147" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2328">plow_run_command(argv=["plow-reminders", "search", "--query", "x"], apple_events=true)</text>
 <rect x="40" y="214" width="172" height="158" rx="12" fill="#FFFFFF" stroke="#D1D9E0" filter="url(#sh)"/>
 <rect x="40" y="214" width="172" height="6" rx="3" fill="#0969DA"/>
 <circle cx="64" cy="248" r="13" fill="#0969DA"/>
 <text x="64" y="253" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">1</text>
 <text x="86" y="247" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1F2328">Allowlist</text>
-<text x="86" y="263" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#59636E">Latch, before anything runs</text>
+<text x="86" y="263" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#59636E">Latch, before it runs</text>
 <text x="56" y="296" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">argv tail vs manifest</text>
-<text x="56" y="315" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">read: runs</text>
-<text x="56" y="334" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">write: owner approves</text>
+<text x="56" y="315" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">needs apple_events=true</text>
+<text x="56" y="334" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">owner decides each call</text>
 <line x1="215" y1="248" x2="235" y2="248" stroke="#59636E" stroke-width="1.6" marker-end="url(#arrow)"/>
 <line x1="126.0" y1="372" x2="126.0" y2="402" stroke="#CF222E" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
 <rect x="40" y="402" width="172" height="82" rx="9" fill="#FFF0EF" stroke="#F5B8B3"/>
 <text x="52" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">not listed:</text>
 <text x="52" y="436" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">  refused by Latch</text>
-<text x="52" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">write declined:</text>
+<text x="52" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">owner declines:</text>
 <text x="52" y="466" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">  not run</text>
 <rect x="238" y="214" width="172" height="158" rx="12" fill="#FFFFFF" stroke="#D1D9E0" filter="url(#sh)"/>
 <rect x="238" y="214" width="172" height="6" rx="3" fill="#8250DF"/>
@@ -87,11 +87,12 @@
 <text x="848" y="334" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#1F2328">JSON argv, never as code</text>
 <line x1="1007" y1="248" x2="1027" y2="248" stroke="#59636E" stroke-width="1.6" marker-end="url(#arrow)"/>
 <line x1="918.0" y1="372" x2="918.0" y2="402" stroke="#CF222E" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
-<rect x="832" y="402" width="172" height="82" rx="9" fill="#FFF0EF" stroke="#F5B8B3"/>
+<rect x="832" y="402" width="172" height="97" rx="9" fill="#FFF0EF" stroke="#F5B8B3"/>
 <text x="844" y="421" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">PERMISSION_DENIED</text>
-<text x="844" y="436" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">TIMEOUT</text>
-<text x="844" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">NOT_FOUND</text>
-<text x="844" y="466" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">APP_ERROR</text>
+<text x="844" y="436" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">SANDBOX_REFUSED</text>
+<text x="844" y="451" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">TIMEOUT</text>
+<text x="844" y="466" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">NOT_FOUND</text>
+<text x="844" y="481" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#CF222E" xml:space="preserve">APP_ERROR</text>
 <rect x="1030" y="214" width="172" height="158" rx="12" fill="#FFFFFF" stroke="#D1D9E0" filter="url(#sh)"/>
 <rect x="1030" y="214" width="172" height="6" rx="3" fill="#8250DF"/>
 <circle cx="1054" cy="248" r="13" fill="#8250DF"/>

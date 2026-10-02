@@ -49,8 +49,10 @@ function mapAppError(number, where, reason) {
     return new QueryError('GUARD_REFUSED', undefined, { reason: GUARD_REASONS.has(reason) ? reason : 'unspecified' });
   }
   switch (number) {
-    case -1743: case -10004:
+    case -1743:
       return new QueryError('PERMISSION_DENIED');
+    case -10004:
+      return new QueryError('SANDBOX_REFUSED');
     case -1712:
       return new QueryError('TIMEOUT', 'The app did not answer the Apple Event in time (error -1712).');
     case -600: case -609:

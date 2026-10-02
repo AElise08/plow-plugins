@@ -18,9 +18,13 @@ Returned fields: `id`, `name`, `emails` (values), `phones` (values). Nothing els
 
 `requires.permissions: ["automation:com.apple.AddressBook"]` — macOS Automation consent for **Contacts**. It is a permission to *control* the app; the restriction to the commands above lives in this CLI and in the manifest's argv allowlist, not in macOS. `plow-contacts doctor` never asks for it.
 
+## Running under Latch
+
+Latch runs a plugin command inside a `sandbox-exec` profile that **denies Apple Events by default**, so every call that reaches the app must declare `apple_events=true` on `plow_run_command` (`doctor` and `--help` need nothing). Latch never stores a rule for such a call: the owner decides each one. The skill tells the agent both. If a call is refused anyway you will see `PERMISSION_DENIED` (macOS Automation not granted, or the call forgot `apple_events=true`), or `SANDBOX_REFUSED` (error -10004: the app itself refuses Apple Events from a sandboxed sender; Latch documents Mail's compose as one such case, and whether Contacts behaves that way has not been checked).
+
 ## Output contract
 
-One JSON object on stdout: `schema_version, ok, source, items, warnings, coverage`. On failure `ok` is `false`, `items` and `coverage` are `null` and the exit code is non-zero (`PERMISSION_DENIED` 3, `TIMEOUT` 4, `NOT_FOUND` 5, `BLOCKED_MISSING_PROPERTY` 6, `APP_UNAVAILABLE`/`APP_ERROR` 7, `ADAPTER_SCHEMA` 8, `RUNTIME_MISSING` 9, `GUARD_REFUSED` 10, bad arguments 2). stderr only ever carries the sanitised code. An incomplete scan is **not** an error: it is `ok: true` with `coverage.complete: false` and `coverage.reasons`; scans are bounded by `--scan-limit` (default 200) and a soft deadline, and "found nothing" is only true for what `coverage` says was scanned.
+One JSON object on stdout: `schema_version, ok, source, items, warnings, coverage`. On failure `ok` is `false`, `items` and `coverage` are `null` and the exit code is non-zero (`PERMISSION_DENIED` / `SANDBOX_REFUSED` 3, `TIMEOUT` 4, `NOT_FOUND` 5, `BLOCKED_MISSING_PROPERTY` 6, `APP_UNAVAILABLE`/`APP_ERROR` 7, `ADAPTER_SCHEMA` 8, `RUNTIME_MISSING` 9, `GUARD_REFUSED` 10, bad arguments 2). stderr only ever carries the sanitised code. An incomplete scan is **not** an error: it is `ok: true` with `coverage.complete: false` and `coverage.reasons`; scans are bounded by `--scan-limit` (default 200) and a soft deadline, and "found nothing" is only true for what `coverage` says was scanned.
 
 ## Limits
 

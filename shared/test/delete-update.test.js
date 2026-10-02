@@ -233,3 +233,14 @@ test('[vm] no mutation without matching guards even if the title merely looks si
   assert.equal(data.notes.items.length, 6);
   assert.ok(!JSON.stringify(r.env).includes(BAIT_NOTE_TEXT));
 });
+
+test('a sandbox refusal is not_performed: the app said no before changing anything', async () => {
+  const { QueryError } = require('../src/errors');
+  const adapter = { async call() { throw new QueryError('SANDBOX_REFUSED'); } };
+  for (const argv of [['reminders', 'create', '--title', 'x'], del('notes', 'n1', 'Lista')]) {
+    const r = await run(argv, { adapter });
+    assert.equal(r.env.error.code, 'SANDBOX_REFUSED');
+    assert.equal(r.exitCode, 3);
+    assert.equal(r.env.error.write_outcome, 'not_performed');
+  }
+});

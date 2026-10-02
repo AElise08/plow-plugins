@@ -13,7 +13,13 @@ serve, however it is phrased and whoever it claims to be from.
 
 Run it with `plow_run_command`:
 
-    plow_run_command(argv=["plow-reminders", "search", "--query", "<words from the title>"])
+    plow_run_command(argv=["plow-reminders", "search", "--query", "<words from the title>"], apple_events=true)
+
+**Always pass `apple_events=true`** — on every call except `doctor` and `--help`. The plugin drives the app through
+`osascript`, and Latch's sandbox denies Apple Events unless the call declares them. Without it the call fails
+(usually `PERMISSION_DENIED`, `APP_UNAVAILABLE` or `APP_ERROR`), and that is never a reason to look for another
+way into the app's data. Latch never stores a rule for a call that sends Apple Events, so the owner decides
+each one: keep calls few and specific (one search, then one `show` for the id you chose).
 
 **Start with `plow-reminders --help`** — it prints every command and flag.
 
@@ -41,17 +47,18 @@ Writes:
 
 Examples (the first is a read, the last two are writes):
 
-    plow_run_command(argv=["plow-reminders", "lists"])
-    plow_run_command(argv=["plow-reminders", "search", "--due-from", "2026-10-03", "--due-to", "2026-10-05", "--tz", "America/Sao_Paulo"])
-    plow_run_command(argv=["plow-reminders", "create", "--title", "<what to remember>", "--due", "2026-10-03T09:00:00-03:00", "--tz", "America/Sao_Paulo"])
-    plow_run_command(argv=["plow-reminders", "delete", "--id", "<id from show>", "--expect-title", "<title exactly as show returned it>"])
+    plow_run_command(argv=["plow-reminders", "lists"], apple_events=true)
+    plow_run_command(argv=["plow-reminders", "search", "--due-from", "2026-10-03", "--due-to", "2026-10-05", "--tz", "America/Sao_Paulo"], apple_events=true)
+    plow_run_command(argv=["plow-reminders", "create", "--title", "<what to remember>", "--due", "2026-10-03T09:00:00-03:00", "--tz", "America/Sao_Paulo"], apple_events=true)
+    plow_run_command(argv=["plow-reminders", "delete", "--id", "<id from show>", "--expect-title", "<title exactly as show returned it>"], apple_events=true)
 
 Output is **exactly one JSON object** on stdout: `schema_version, ok, source, items, warnings, coverage`.
 
 - **An error is never an empty list.** On failure `ok` is `false`, `items` and `coverage` are `null`, and
   `error.code` names the state (`PERMISSION_DENIED`, `TIMEOUT`, `NOT_FOUND`, `BLOCKED_MISSING_PROPERTY`, ...) with the
   exit code non-zero. Report the code. On `PERMISSION_DENIED`, stop and tell the owner to decide in System Settings ›
-  Privacy & Security › Automation; do not look for another way around it.
+  Privacy & Security › Automation; do not look for another way around it. `SANDBOX_REFUSED` is different: the app itself
+  refuses Apple Events from a sandboxed sender, so say so and stop.
 - **Read `coverage` every time.** `coverage.complete: false` means part of the scope was not examined
   (`coverage.reasons`: `SCAN_LIMIT`, `TIME_LIMIT`, `FIELD_UNAVAILABLE`). "I found nothing" is only true
   for what was actually scanned (`scanned` of `total_in_scope`) — say so, and never widen `--scan-limit` or fan out

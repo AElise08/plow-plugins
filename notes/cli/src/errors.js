@@ -7,6 +7,7 @@ const EXIT_CODES = {
   UNKNOWN_COMMAND: 2,
   FORBIDDEN_COMMAND: 2,
   PERMISSION_DENIED: 3,
+  SANDBOX_REFUSED: 3,
   TIMEOUT: 4,
   NOT_FOUND: 5,
   BLOCKED_MISSING_PROPERTY: 6,
@@ -27,7 +28,11 @@ const DEFAULT_DETAIL = {
   FORBIDDEN_COMMAND: 'This kind of command (edit, complete, move, unlock, open, execute...) is refused by design.',
   PERMISSION_DENIED:
     'macOS denied Automation access to the app (error -1743). Nothing was read. ' +
-    'Decide manually in System Settings > Privacy & Security > Automation.',
+    'Decide manually in System Settings > Privacy & Security > Automation. ' +
+    'Under Latch, the call must also declare apple_events=true, or its sandbox denies the event.',
+  SANDBOX_REFUSED:
+    'The app refused an Apple Event from a sandboxed process (error -10004). That is the app saying no to ' +
+    'sandboxed senders, not a missing Automation permission, and nothing was changed.',
   TIMEOUT: 'The app did not answer before the timeout; the helper process was killed.',
   NOT_FOUND: 'No item or scope with that id exists in the state exposed by the app.',
   BLOCKED_MISSING_PROPERTY:
